@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.databricks/
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+data/
+
+.databricks
