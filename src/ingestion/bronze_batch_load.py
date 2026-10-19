@@ -3,6 +3,7 @@ import argparse
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
+from src.common.spark_session import get_spark
 
 SOURCE_SYSTEM = "oltp_retail"
 
@@ -11,14 +12,6 @@ TABLES = [
     "orders", "order_items", "order_payments", "geolocation", "order_reviews",
 ]
 
-
-def get_spark() -> SparkSession:
-    """Databricks Connect when run locally, the cluster's session when run on Databricks."""
-    try:
-        from databricks.connect import DatabricksSession
-        return DatabricksSession.builder.getOrCreate()
-    except ImportError:
-        return SparkSession.builder.getOrCreate()
 
 
 def load_table(spark, catalog: str, storage_account: str, table: str) -> int:
