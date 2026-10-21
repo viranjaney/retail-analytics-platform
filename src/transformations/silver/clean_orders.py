@@ -5,6 +5,7 @@ from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
 from src.common.spark_session import get_spark
+from src.common.delta_utils import overwrite_table
 
 ALLOWED_STATUSES = [
     "created", "approved", "invoiced", "processing",
@@ -58,15 +59,11 @@ def main() -> None:
     spark = get_spark()
     bronze = spark.table(f"{args.catalog}.bronze.orders")
     clean, quarantine = transform_orders(bronze)
-
-    clean.write.format("delta").mode("overwrite") \
-         .option("overwriteSchema", "true").saveAsTable(f"{args.catalog}.silver.orders")
-    quarantine.write.format("delta").mode("overwrite") \
-         .option("overwriteSchema", "true").saveAsTable(f"{args.catalog}.silver.orders_quarantine")
-
-    print(f"silver.orders: {spark.table(f'{args.catalog}.silver.orders').count():,} rows")
-    print(f"silver.orders_quarantine: {spark.table(f'{args.catalog}.silver.orders_quarantine').count():,} rows")
-
-
+    n_clean = overwrite_table(clean, f"{args.catalog}.silver.orders")
+    n_quar = overwrite_table(quarantine, f"{args.catalog}.silver.orders_quarantine")
+    print(f"silver.orders: {n_clean:,} rows")
+    print(f"silver.orders_qurantine: {n_quar:,} rows")
+    
+   
 if __name__ == "__main__":
     main()
