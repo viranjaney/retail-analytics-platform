@@ -1,11 +1,12 @@
 """Silver customers: standardize, validate, deduplicate."""
 import argparse
 
-from pyspark.sql import DataFrame, Window
+from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 
 from src.common.delta_utils import overwrite_table
 from src.common.spark_session import get_spark
+from src.common.transform_utils import dedupe_latest
 
 def transform_customers(bronze_df: DataFrame) -> tuple[DataFrame, DataFrame]:
     """Return (clean, quarantine). Pure function so it can be unit tested"""
@@ -31,14 +32,8 @@ def transform_customers(bronze_df: DataFrame) -> tuple[DataFrame, DataFrame]:
 
     quarantine = df.filter(F.col("_dq_reason").isNotNull())
 
-    latest_first = Window.partitionBy("customer_id").orderBy(F.col("_bronze_ingested_at").desc())
-
     clean = (
-        df.filter(F.col("_dq_reason").isNull())
-        .drop("_dq_reason")
-        .withColumn("_rn", F.row_number().over(latest_first))
-        .filter(F.col("_rn") == 1)
-        .drop("_rn")
+        dedupe_latest(df.filter(F.col("_dq_reason").isNull()).drop("_dq_reason"), ["customer_id"])
         .withColumn("_processed_at", F.current_timestamp())
     )
     return clean, quarantine
