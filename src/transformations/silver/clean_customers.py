@@ -6,21 +6,19 @@ from pyspark.sql import functions as F
 
 from src.common.delta_utils import overwrite_table
 from src.common.spark_session import get_spark
-from src.common.transform_utils import dedupe_latest
+from src.common.transform_utils import dedupe_latest, matches, pad_zip
 
 def transform_customers(bronze_df: DataFrame) -> tuple[DataFrame, DataFrame]:
     """Return (clean, quarantine). Pure function so it can be unit tested"""
     df = bronze_df.select(
        F.trim("customer_id").alias("customer_id"),
         F.trim("customer_unique_id").alias("customer_unique_id"),
-        F.trim("customer_zip_code_prefix").alias("zip_code_prefix"),
+        pad_zip("customer_zip_code_prefix").alias("zip_code_prefix"),
         F.lower(F.trim("customer_city")).alias("city"),
         F.upper(F.trim("customer_state")).alias("state"),
         F.col("_ingested_at").alias("_bronze_ingested_at")
     )
-# coalesce(..., False) so a NULL value fails the check instead of slipping past it
-    def matches(column: str, pattern: str):
-        return F.coalesce(F.col(column).rlike(pattern), F.lit(False))
+    
 
     dq_reason = (
         F.when(F.col("customer_id").isNull() | (F.col("customer_id") == ""), "missing_customer_id")

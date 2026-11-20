@@ -24,7 +24,7 @@ def transform_products(products_df: DataFrame, translation_df: DataFrame) -> tup
     df = products_df.select(
         F.trim("product_id").alias("product_id"),
         F.lower(F.trim("product_category_name")).alias("category_name_pt"),
-        F.col("product_name_lenght").alias("name_length"),            # misspelling fixed
+        F.col("product_name_length").alias("name_length"),            # misspelling fixed
         F.col("product_description_lenght").alias("description_length"),
         F.col("product_photos_qty").alias("photos_qty"),
         F.col("product_weight_g").alias("weight_g"),

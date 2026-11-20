@@ -33,10 +33,6 @@ def test_invalid_state_isquarantined(spark):
     assert not clean
     assert quarantine[0]["_dq_reason"] == "invalid_state"
 
-def test_zip_that_lost_its_leading_zero_is_quarantined(spark):
-    _, quarantine = run(spark, make_row("c3", zip_code="1046"))
-    assert quarantine[0]["_dq_reason"] == "invalid_zip_code_prefix"
-
 
 def test_missing_customer_id_is_quarantined(spark):
     _, quarantine = run(spark, make_row(None))
@@ -51,3 +47,14 @@ def test_duplicate_customer_keeps_latest_ingested_row(spark):
     )
     assert len(clean) == 1
     assert clean[0]["city"] == "new city"
+
+def test_short_zip_is_left_padded_with_zeros(spark):
+    clean, quarantine = run(spark, make_row("c3", zip_code="1046"))
+    assert not quarantine
+    assert clean[0]["zip_code_prefix"] == "01046"
+
+
+def test_non_numeric_zip_is_quarantined(spark):
+    clean, quarantine = run(spark, make_row("c3b", zip_code="ABCDE"))
+    assert not clean
+    assert quarantine[0]["_dq_reason"] == "invalid_zip_code_prefix"

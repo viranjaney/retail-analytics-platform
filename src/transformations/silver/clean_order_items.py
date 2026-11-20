@@ -79,7 +79,7 @@ def main() -> None:
         spark.table(f"{c}.bronze.order_items"),
         spark.table(f"{c}.silver.orders"),
         spark.table(f"{c}.silver.products"),
-        spark.table(f"{c}.bronze.sellers"),  # switch to silver.sellers once that table exists
+        spark.table(f"{c}.silver.sellers")
     )
     n_clean = overwrite_table(clean, f"{c}.silver.order_items")
     n_quar = overwrite_table(quarantine, f"{c}.silver.order_items_quarantine")
