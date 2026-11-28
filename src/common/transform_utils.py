@@ -21,3 +21,15 @@ def pad_zip(column: str):
     z = F.trim(F.col(column))
     return F.when(F.length(z) < 5, F.lpad(z, 5, "0")).otherwise(z)
 
+def is_blank(column: str):
+    return F.col(column).isNull() | (F.col(column) == "")
+
+def with_known_flag(df: DataFrame, keys_df: DataFrame, key_col: str, flag_col: str) -> DataFrame:
+    """Left join to the set of valid keys; flag_col is NULL when the key has no match."""
+    keys = (
+        keys_df.select(F.trim(F.col(key_col)).alias(key_col))
+        .distinct()
+        .withColumn(flag_col, F.lit(True))
+    )
+    return df.join(keys, on=key_col, how="left")
+

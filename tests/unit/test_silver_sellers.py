@@ -58,3 +58,4 @@ def test_duplicate_seller_keeps_latest_ingested_row(spark):
                           make_row("s5", city="New City", ingested=T2))
     assert len(clean) == 1
     assert clean[0]["city"] == "new city"
+    
